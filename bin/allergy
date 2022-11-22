@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# PHILLY=https://weather.com/forecast/allergy/l/Philadelphia+PA
+ALLERGY_FILE=/tmp/.allergy.html
+
+# curl --location --request GET -s $PHILLY > $ALLERGY_FILE
+
+curl --location --request GET 'https://weather.com/forecast/allergy/l/Philadelphia+PA?canonicalCityId=aa0f46aff5c7ee96eb5fdea10c53c77c9578eb071854d7f04ae0a7aa517772ab' \
+--header 'Cookie: speedpin=4G; ci=TWC-Connection-Speed=4G&TWC-Locale-Group=US&TWC-Device-Class=desktop&X-Origin-Hint=Prod-IBM-allergy&TWC-Network-Type=wifi&TWC-GeoIP-Country=US&TWC-GeoIP-Lat=39.9524&TWC-GeoIP-Long=-75.1642&Akamai-Connection-Speed=1000+&TWC-Privacy=usa&TWC-GeoIP-DMA=504&TWC-GeoIP-City=PHILADELPHIA&TWC-GeoIP-Region=PA' -s > $ALLERGY_FILE
+
+SECTION_SELECTOR='div[class^="PollenBreakdown--breakdownContainer"]'
+TITLE_SELECTOR="$SECTION_SELECTOR h3 text{}"
+
+TITLES_FILE=/tmp/titles
+cat $ALLERGY_FILE | pup $TITLE_SELECTOR > $TITLES_FILE
+
+VALUES_FILE=/tmp/values
+VALUE_SELECTOR="$SECTION_SELECTOR li[class^=PollenBreakdown--outlookLevel] text{}"
+cat $ALLERGY_FILE | pup $VALUE_SELECTOR > $VALUES_FILE
+
+for i in {1..3}
+do
+	sed -n "$i,$i p" $TITLES_FILE
+	sed -n "$((((i-1)*6)+1)),$(($i*6)) p" $VALUES_FILE
+	echo ""
+done
